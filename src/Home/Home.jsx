@@ -80,7 +80,7 @@ const Home = () => {
             </h2>
           </div>
         </div>
-        <Careers />
+        <Careers hideButton={true} />
       </section>
 
       <section ref={servicesRef}>

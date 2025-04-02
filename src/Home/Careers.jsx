@@ -1,84 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import supabase from "../SupabaseClient";
+import { useNavigate } from "react-router-dom";
+import JobDetailsModal from "./JobDetailsModal"; // Import the new modal component
 
-// Sample job data
-const jobs = [
-  {
-    id: 1,
-    company: "AIR BNB INTERNATIONAL",
-    logo: "logo.png",
-    date: "January 16, 2023",
-    requirements: [
-      "Knowledge in MS Office Application",
-      "Can pay attention to details",
-      "Can work with minimal supervision",
-    ],
-    applyLink: "https://airbnb.jobs/hiring",
-    color: "bg-red-100",
-  },
-  {
-    id: 2,
-    company: "QATAR AIRWAYS",
-    logo: "logo.png",
-    date: "February 10, 2023",
-    description:
-      "The Qatar Airways is in need of qualified mobile application developer with the following fields of specialization:",
-    specializations: ["Flutter", "Firebase"],
-    applyLink: "https://qatarairways/job/hiring",
-    color: "bg-blue-100",
-  },
-  {
-    id: 3,
-    company: "PLDT Main Branch",
-    logo: "logo.png",
-    date: "January 19, 2022",
-    description:
-      "The PLDT Main Branch is in need of a full-time faculty member. Click the button below for more details.",
-    applyLink: "https://pldtphilippines/job/hiring",
-    color: "bg-red-100",
-  },
-  {
-    id: 4,
-    company: "GLOBE TELECOM",
-    logo: "logo.png",
-    date: "March 5, 2023",
-    requirements: [
-      "Experience in network administration",
-      "CCNA certification is an advantage",
-      "Willing to work on shifting schedules",
-    ],
-    applyLink: "https://globe.com.ph/careers",
-    color: "bg-blue-100",
-  },
-  {
-    id: 5,
-    company: "AMAZON Web Services",
-    logo: "logo.png",
-    date: "April 12, 2023",
-    description:
-      "Amazon Web Services is looking for cloud engineers with experience in:",
-    specializations: ["AWS Lambda", "DynamoDB", "CloudFormation"],
-    applyLink: "https://aws.amazon.com/careers",
-    color: "bg-yellow-100",
-  },
-  {
-    id: 6,
-    company: "MICROSOFT Philippines",
-    logo: "logo.png",
-    date: "February 28, 2023",
-    description:
-      "Microsoft Philippines is hiring software engineers for their Manila office.",
-    requirements: [
-      "Strong in C# and .NET development",
-      "Experience with Azure services",
-      "Good communication skills",
-    ],
-    applyLink: "https://careers.microsoft.com",
-    color: "bg-green-100",
-  },
-];
-
-const Careers = () => {
+const Careers = ({hideButton}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [jobs, setJobs] = useState([]);
+  const navigate = useNavigate();
+  // New state for modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState(null);
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    const { data } = await supabase.from("jobs")
+    .select("*")
+    .eq("status", "Approved");
+    setJobs(data);
+  };
+ 
+  // Open modal with selected job
+  const openJobDetails = (jobId) => {
+    setSelectedJobId(jobId);
+    setModalOpen(true);
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setModalOpen(false);
+  };
 
   // Number of cards to display at once
   const getCardsToShow = () => {
@@ -103,6 +56,15 @@ const Careers = () => {
   // Get the current visible jobs
   const visibleJobs = jobs.slice(currentIndex, currentIndex + cardsToShow);
 
+  const formatDate = (isoDateString) => {
+    const date = new Date(isoDateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+  
+    return `${month}-${day}-${year}`;
+  };
+  
   return (
     <>
       {/* Banner Section */}
@@ -125,10 +87,13 @@ const Careers = () => {
             <p className="text-white text-sm md:text-base mb-5">
               Your complete guide to a career with your university degree.
             </p>
-            <button className="bg-white text-green-900 px-4 py-2 rounded flex items-center w-fit cursor-pointer">
-              <span className="mr-2 font-bold">+</span>
-              Post a job
-            </button>
+            {!hideButton && (
+        <button className="bg-white text-green-900 px-4 py-2 rounded flex items-center w-fit cursor-pointer"
+        onClick={() => navigate("/user-posting")}>
+          <span className="mr-2 font-bold">+</span>
+          Post a job
+        </button>
+      )}
           </div>
         </div>
       </div>
@@ -175,9 +140,9 @@ const Careers = () => {
                   />
                   <div>
                     <h3 className="text-lg font-bold text-green-900">
-                      {job.company}
+                      {job.company_name}
                     </h3>
-                    <span className="text-gray-500 text-sm">{job.date}</span>
+                    <span className="text-gray-500 text-sm">{formatDate(job.created_at)}</span>
                   </div>
                 </div>
                 <div className="p-4 flex-1">
@@ -186,40 +151,14 @@ const Careers = () => {
                       {job.description}
                     </p>
                   )}
-
-                  {job.requirements && (
-                    <div className="mt-2">
-                      <h4 className="text-gray-800 text-sm font-semibold">
-                        Requirements:
-                      </h4>
-                      <ul className="list-disc pl-5 text-gray-700 text-sm min-h-[60px]">
-                        {job.requirements.map((req, index) => (
-                          <li key={index}>{req}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {job.specializations && (
-                    <div className="mt-2">
-                      <h4 className="text-gray-800 text-sm font-semibold">
-                        Specializations:
-                      </h4>
-                      <ul className="list-disc pl-5 text-gray-700 text-sm min-h-[60px]">
-                        {job.specializations.map((spec, index) => (
-                          <li key={index}>{spec}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
-                {job.applyLink && (
                   <div className="p-4 flex justify-end items-center gap-2 border-t mt-auto">
-                    <a
-                      href={job.applyLink}
+                    <button
+                      onClick={() => openJobDetails(job.id)}
                       className="text-green-900 text-sm font-bold rounded-full bg-gray-200 px-4 py-2 border"
                     >
                       Details
-                    </a>
+                    </button>
                     <a
                       href={job.applyLink}
                       className="bg-green-900 text-white px-4 py-2 rounded-full text-sm hover:bg-green-800"
@@ -227,7 +166,6 @@ const Careers = () => {
                       Apply Now
                     </a>
                   </div>
-                )}
               </div>
             ))}
           </div>
@@ -258,6 +196,13 @@ const Careers = () => {
           </button>
         </div>
       </div>
+
+      {/* Modal Component */}
+      <JobDetailsModal 
+        isOpen={modalOpen}
+        onClose={closeModal}
+        jobId={selectedJobId}
+      />
     </>
   );
 };

@@ -7,6 +7,7 @@ import {
   FaCalendarAlt,
   FaChevronDown,
 } from "react-icons/fa";
+import supabase from "../SupabaseClient";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -17,9 +18,9 @@ const Register = () => {
     lastName: "",
     college: "",
     program: "",
-    birthDate: "",
     gender: "",
     emailAddress: "",
+    password:"",
     contactNumber: "",
     currentAddress: "",
     privacyAgreement: false,
@@ -64,7 +65,7 @@ const Register = () => {
       "lastName",
       "college",
       "program",
-      "birthDate",
+      "password",
       "gender",
       "emailAddress",
       "contactNumber",
@@ -104,12 +105,38 @@ const Register = () => {
   };
 
   //simulation
-  const confirmSubmission = () => {
-    setShowConfirmModal(false);
-    setTimeout(() => {
-      setShowSuccessModal(true);
-    }, 500);
+  const confirmSubmission = async () => {
+    try {
+      setShowConfirmModal(false);
+  
+      const { error } = await supabase.from("alumni").insert([
+        {
+        idnumber : formData.idNumber,
+        year_graduated : formData.yearGraduated,
+        first_name : formData.firstName,
+        middle_name : formData.middleName,
+        last_name : formData.lastName,
+        college : formData.college,
+        program : formData.program,
+        gender : formData.gender,
+        email : formData.emailAddress,
+        password : formData.password,
+        contact_number : formData.contactNumber,
+        address : formData.currentAddress,
+        }
+      ]);
+  
+      if (error) {
+        console.error("Error inserting data:", error.message);
+        return;
+      }
+  
+   window.location.reload();
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
   };
+  
 
   const closeModals = () => {
     setShowConfirmModal(false);
@@ -257,19 +284,6 @@ const Register = () => {
                   </div>
 
                   <div className="relative">
-                    <input
-                      type="date"
-                      name="birthDate"
-                      value={formData.birthDate}
-                      onChange={handleChange}
-                      className={`w-full p-2 border rounded-md ${
-                        errors.birthDate ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                    {/* <FaCalendarAlt className="absolute right-3 top-3 text-green-800" /> */}
-                  </div>
-
-                  <div className="relative">
                     <select
                       name="gender"
                       value={formData.gender}
@@ -313,6 +327,24 @@ const Register = () => {
                       }`}
                     />
                     {errors.emailAddress && (
+                      <FaExclamationCircle className="absolute right-3 top-3 text-red-500" />
+                    )}
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Password"
+                      className={`w-full p-2 border rounded-md ${
+                        errors.password
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors.password && (
                       <FaExclamationCircle className="absolute right-3 top-3 text-red-500" />
                     )}
                   </div>

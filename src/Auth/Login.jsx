@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import supabase from "../SupabaseClient";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -19,11 +20,56 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login submitted:", formData);
+  
+    // Check if email and password are provided
+    if (!formData.email || !formData.password) {
+      alert("Please fill in all fields.");
+      return;
+    }
+  
+    // Check for superadmin login
+    if (formData.email === "superadmin@gmail.com" && formData.password === "superadmin") {
+      alert("Login successful as Superadmin!");
+      navigate("/admin-home");
+      return;
+    }
+  
+    try {
+      const { data, error } = await supabase
+        .from("alumni")
+        .select("*")
+        .eq("email", formData.email)
+        .eq("password", formData.password)
+        .single();
+  
+      const name = [data.first_name, data.middle_name, data.last_name]
+        .filter(Boolean)
+        .join(" ");
+  
+      sessionStorage.setItem("name", name);
+  
+      if (error) {
+        console.error("Supabase error:", error.message);
+        alert("Wrong credentials. Please try again.");
+        return;
+      }
+  
+      if (!data) {
+        alert("Invalid email or password.");
+        return;
+      }
+  
+      alert("Login successful!");
+      navigate("/user-home");
+  
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("Something went wrong. Please try again.");
+    }
   };
-
+  
   const handleRegister = () => {
     navigate("/register");
   };
